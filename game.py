@@ -22,6 +22,8 @@ class enemy:
         self.game = game
         self.xpos = xpos
         self.ypos = ypos
+        self.size = 5
+        self.cycle = 0
         self.model = [0,0,1,0,0,0,0,0,1,0,0,
                       0,0,0,1,0,0,0,1,0,0,0,
                       0,0,1,1,1,1,1,1,1,0,0,
@@ -31,16 +33,33 @@ class enemy:
                       1,0,1,0,0,0,0,0,1,0,1,
                       0,0,0,1,1,0,1,1,0,0,0]
 
+        self.model2 = [0,0,1,0,0,0,0,0,1,0,0,
+                       1,0,0,1,0,0,0,1,0,0,1,
+                       1,0,1,1,1,1,1,1,1,0,1,
+                       1,1,1,0,1,1,1,0,1,1,1,
+                       0,1,1,1,1,1,1,1,1,1,1,
+                       0,0,1,1,1,1,1,1,1,0,0,
+                       0,0,1,0,0,0,0,0,1,0,0,
+                       0,1,0,0,0,0,0,0,0,1,0]
+        self.draw_model = None
+
+
     def draw(self):
         start_y = self.ypos
+
+        if self.cycle % 100 == 0:
+            self.draw_model = self.model2 if self.draw_model == self.model else self.model
+
+        self.cycle += 1
         for row in range(8):
             start_x = self.xpos
             for column in range(11):
-                if self.model[11*row+column] == 1:
-                    pygame.draw.rect(self.game.screen, (0,255,0), (start_x, start_y, 10, 10))
-                start_x += 10
+                if self.draw_model[11*row+column] == 1:
+                    pygame.draw.rect(self.game.screen, (0,255,0), (start_x, start_y, self.size,
+                        self.size))
+                start_x += self.size 
             # go column lower
-            start_y += 10
+            start_y += self.size
 
 
 
