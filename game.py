@@ -22,8 +22,11 @@ class enemy:
         self.game = game
         self.xpos = xpos
         self.ypos = ypos
-        self.size = 5
+        self.pixel_size = 5 
+        self.width = 11 * self.pixel_size # columns * pixel_size
+        self.height = 8 * self.pixel_size # rows * pixel_size
         self.cycle = 0
+        self.direction = -1 # -1 == left, 1 == right (todo: enumify?)
         self.model = [0,0,1,0,0,0,0,0,1,0,0,
                       0,0,0,1,0,0,0,1,0,0,0,
                       0,0,1,1,1,1,1,1,1,0,0,
@@ -55,13 +58,14 @@ class enemy:
             start_x = self.xpos
             for column in range(11):
                 if self.draw_model[11*row+column] == 1:
-                    pygame.draw.rect(self.game.screen, (0,255,0), (start_x, start_y, self.size,
-                        self.size))
-                start_x += self.size 
+                    pygame.draw.rect(self.game.screen, (0,255,0), (start_x, start_y, self.pixel_size,
+                        self.pixel_size))
+                start_x += self.pixel_size 
             # go column lower
-            start_y += self.size
+            start_y += self.pixel_size
 
-
+    def update(self):
+        self.xpos += 1 * self.direction
 
 class laser:
     def __init__(self, game, xpos, ypos):
@@ -84,8 +88,10 @@ class player:
         self.xpos = 200
         self.ypos = self.game.size[1] - 100 
         self.width = 60
+
         self.height = 40 
         self.model = [0,0,0,1,0,0,0,
+
                       0,1,1,1,1,1,0,
                       1,1,1,1,1,1,1]
 
@@ -118,9 +124,13 @@ class game:
         self.screen = pygame.display.set_mode(self.size)
         self.player = player(self)
         self.player_lasers = []
-        self.enemies = [enemy(self, 200, 200)]
+        self.enemies = [] 
+        self.i = 0
 
     def run(self):
+        # set up the enemies
+        for i in range(10):
+            self.enemies.append(enemy(self, 80 + i * 80, 50))
         while True:
             self.check_events()
             self.update()
@@ -147,8 +157,43 @@ class game:
                         self.player.ypos - 40))
 
     def update(self):
+        self.check_enemy_hits()
         for laser in self.player_lasers:
             laser.update()
+
+        # Check if an enemy hits the left wall
+        for enemy in self.enemies:
+            enemy.update()
+        left_wall_touching = len(list(filter(lambda enemy: enemy.xpos < 0, self.enemies)))
+        right_wall_touching = len(list(filter(lambda enemy: enemy.xpos + enemy.width > self.size[0], self.enemies)))
+        if left_wall_touching > 0 or right_wall_touching > 0:
+            # change the direction
+            for enemy in self.enemies:
+                enemy.direction *= -1
+
+    def check_enemy_hits(self):
+        print("checking hits " + str(self.i))
+        self.i += 1
+        dead_enemies = []
+        destroyed_lasers = []
+        if len(self.player_lasers) <= 0:
+            return
+        for enemy in self.enemies:
+            for laser in self.player_lasers:
+                laser_rect = pygame.Rect((laser.xpos, laser.ypos), (laser.width, laser.height))
+                enemy_rect = pygame.Rect((enemy.xpos, enemy.ypos), (enemy.width, enemy.height))
+                collision = pygame.Rect.colliderect(laser_rect, enemy_rect)
+                if collision == True:
+                    dead_enemies.append(enemy)
+                    destroyed_lasers.append(laser)
+        if len(dead_enemies) > 0:
+            self.enemies = list(filter(lambda e: e not in dead_enemies, self.enemies))
+            self.player_lasers = list(filter(lambda l: l not in destroyed_lasers,
+                self.player_lasers))
+        #self.player_lasers = surviving_lasers
+
+
+
 
     def draw(self):
         self.screen.fill((0,0,0)) # black background
