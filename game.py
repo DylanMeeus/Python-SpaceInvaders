@@ -10,6 +10,7 @@
 
 import sys
 import pygame
+import random
 from enum import Enum
 
 class Colour(Enum):
@@ -65,7 +66,7 @@ class enemy:
             start_y += self.pixel_size
 
     def update(self):
-        self.xpos += 1 * self.direction
+        self.xpos += 5 * self.direction
 
 class laser:
     def __init__(self, game, xpos, ypos):
@@ -74,12 +75,19 @@ class laser:
         self.ypos = ypos
         self.height = 40 
         self.width = 5
+        self.speed = 2
+        self.colourr = random.randint(0,255)
+        self.colourg = random.randint(0,255)
+        self.colourb = random.randint(0,255)
 
     def draw(self):
-        pygame.draw.rect(self.game.screen, (0,0,255), (self.xpos, self.ypos, self.width, self.height))
+        pygame.draw.rect(self.game.screen, (self.colourr, self.colourg, self.colourb), (self.xpos, self.ypos, self.width, self.height))
 
     def update(self):
-        self.ypos -= 2 
+        self.ypos -= self.speed
+        if self.ypos < 40 and self.speed == 2:
+               self.speed *= -1 
+               self.ypos = 10
 
 
 class player:
@@ -90,18 +98,21 @@ class player:
         self.width = 60
 
         self.height = 40 
-        self.model = [0,0,0,1,0,0,0,
+        self.model = [1,1,1,1,1,1,1,1,1,0,1,0,1,1,
 
                       0,1,1,1,1,1,0,
                       1,1,1,1,1,1,1]
 
     def draw(self):
         start_y = self.ypos
-        for row in range(3):
+        for row in range(4):
             start_x = self.xpos
             for column in range(7):
                 if self.model[7*row+column] == 1:
-                    pygame.draw.rect(self.game.screen, (0,255,0), (start_x, start_y, 10, 10))
+                    if row == 0:
+                          pygame.draw.rect(self.game.screen, (255,0,0), (start_x, start_y, 10, 10))
+                    else:
+                          pygame.draw.rect(self.game.screen, (155,255,155), (start_x, start_y, 10, 10))
                 start_x += 10
 
             # go column lower
@@ -120,7 +131,7 @@ class player:
 class game:
     def __init__(self):
         pygame.init()
-        self.size = width, height = 1000, 800 
+        self.size = width, height = 1000,600 
         self.screen = pygame.display.set_mode(self.size)
         self.player = player(self)
         self.player_lasers = []
@@ -131,6 +142,7 @@ class game:
         # set up the enemies
         for i in range(10):
             self.enemies.append(enemy(self, 80 + i * 80, 50))
+            self.enemies.append(enemy(self, 80 +i * 80, 100))
         while True:
             self.check_events()
             self.update()
@@ -169,6 +181,7 @@ class game:
         if left_wall_touching > 0 or right_wall_touching > 0:
             # change the direction
             for enemy in self.enemies:
+                enemy.ypos += 50
                 enemy.direction *= -1
 
     def check_enemy_hits(self):
