@@ -167,8 +167,9 @@ class game:
         left_wall_touching = len(list(filter(lambda enemy: enemy.xpos < 0, self.enemies)))
         right_wall_touching = len(list(filter(lambda enemy: enemy.xpos + enemy.width > self.size[0], self.enemies)))
         if left_wall_touching > 0 or right_wall_touching > 0:
-            # change the direction
+            # change the direction and make them descend
             for enemy in self.enemies:
+                enemy.ypos += 50
                 enemy.direction *= -1
 
     def check_enemy_hits(self):
